@@ -1,7 +1,28 @@
 #importing relevant packages/libraries
 import pygame
 from random import randint
+from pygame.sprite import Sprite,Group
 #Screen setup
+
+class Player(Sprite):
+    def __init__(self,groups):
+        super().__init__(groups)
+        self.image=pygame.image.load('../images/player.png').convert_alpha()
+        self.rect=self.image.get_frect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT-50))
+        self.direction=pygame.math.Vector2()
+        self.speed=300
+    def update(self):
+        #print("Ship is moving")
+        #Ship movement using Object Oriented Programming
+        keys=pygame.key.get_pressed()
+        player_vec=self.direction
+        player_vec.x=int(keys[pygame.K_d])-int(keys[pygame.K_a])
+        player_vec.y=int(keys[pygame.K_s])-int(keys[pygame.K_w])
+        #normalizing the vector to avoid diagonal speed boost
+        player_vec=player_vec.normalize() if player_vec else player_vec
+        self.rect.center+=player_vec*self.speed*dt
+ 
+
 
 pygame.init()
 
@@ -18,20 +39,17 @@ pygame.display.set_icon(logo)
 
 x=100
 y=175
-#player direction and speed used for player movement
-player_speed=300
-#laser speed used for laser movement
-laser_speed=500
+#just in case if i require speed and direction for player movement
+
+
 
 surface=pygame.Surface((100,200))
 surface.fill((70,70,70))
 
-#imorting player and other useful stuff like stars and meteors for the background
-player=pygame.image.load('../images/player.png').convert_alpha()
-#assigning rec to player for collision detection and movement
-player_rec=player.get_frect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT-50))
-#making it a vector so that we can use it to move the player around the screen
-player_vec=pygame.math.Vector2()
+#creating player using sprite class
+sprites=Group()
+player=Player(sprites)
+
 star=pygame.image.load('../images/star.png').convert_alpha()
 star_pos=[(randint(0, WINDOW_WIDTH), randint(0, WINDOW_HEIGHT)) for x in range(50)]
 meteor=pygame.image.load('../images/meteor.png').convert_alpha()
@@ -49,23 +67,14 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-     #player movement using velocity and frame rate to make it smooth and consistent across different devices
-    keys=pygame.key.get_pressed()
-    mouse=pygame.mouse.get_just_pressed()
     
-    player_vec.x=int(keys[pygame.K_d])-int(keys[pygame.K_a])
-    player_vec.y=int(keys[pygame.K_s])-int(keys[pygame.K_w])
-    player_vec=player_vec.normalize() if player_vec else player_vec
-    if keys[pygame.K_SPACE]:
-        print("Shooting")
-    if mouse[0]:
-        print("Shooting")
-        laser_vec.x=int(pygame.mouse.get_pos()[0]-laser_rec.centerx)
-        laser_vec.y=int(pygame.mouse.get_pos()[1]-laser_rec.centery)
-        #laser_vec=laser_vec.normalize() if laser_vec else laser_vec    
-        laser_rec.center+=laser_vec*laser_speed*dt
-   
-    player_rec.center+=player_vec*player_speed*dt
+
+    
+ 
+
+    sprites.update()
+
+
    # print((player_vec*player_speed).magnitude())
     screen.fill((30,10,60))
 
@@ -74,11 +83,8 @@ while running:
         screen.blit(star, (star_x, star_y))
     screen.blit(meteor, meteor_rec)
     screen.blit(laser, laser_rec)
-    
-    
-    
 
-
-    screen.blit(player, player_rec)
+    sprites.draw(screen)
+    
     pygame.display.update()
 pygame.quit()
