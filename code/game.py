@@ -11,16 +11,21 @@ class Player(Sprite):
         self.rect=self.image.get_frect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT-50))
         self.direction=pygame.math.Vector2()
         self.speed=300
-    def update(self):
+    def update(self,dt):
         #print("Ship is moving")
         #Ship movement using Object Oriented Programming
         keys=pygame.key.get_pressed()
+        #player vector for movement, using the direction vector to move the player
         player_vec=self.direction
         player_vec.x=int(keys[pygame.K_d])-int(keys[pygame.K_a])
         player_vec.y=int(keys[pygame.K_s])-int(keys[pygame.K_w])
         #normalizing the vector to avoid diagonal speed boost
         player_vec=player_vec.normalize() if player_vec else player_vec
         self.rect.center+=player_vec*self.speed*dt
+        #checking recent mouse click for shooting the laser
+        recent_click=pygame.mouse.get_just_pressed()
+        if recent_click[0]:
+            print("Laser fired")
  
 
 
@@ -72,7 +77,7 @@ while running:
     
  
 
-    sprites.update()
+    sprites.update(dt)
 
 
    # print((player_vec*player_speed).magnitude())
