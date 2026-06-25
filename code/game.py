@@ -84,8 +84,9 @@ class Meteor(Sprite):
             self.kill()
 
 
-
-
+def collisions():
+    #testing collision between laser and meteor
+    collisions=pygame.sprite.groupcollide(laser_sprites,meteor_sprites,True,True)
 
 
 pygame.init()
@@ -146,10 +147,7 @@ while running:
 
 
     sprites.update(dt)
-    #testing collision between laser and meteor
-    collisions=pygame.sprite.groupcollide(laser_sprites,meteor_sprites,True,True)
-    if collisions:
-        print("Collision detected")
+    collisions()
 
 
 
