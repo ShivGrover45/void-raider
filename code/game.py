@@ -1,6 +1,6 @@
 #importing relevant packages/libraries
 import pygame
-from random import randint
+from random import randint,uniform
 from pygame.sprite import Sprite,Group
 #Screen setup
 
@@ -66,6 +66,25 @@ class Laser(Sprite):
     def update(self,dt):
         #moving the laser in y-axis
         self.rect.centery-=300*dt
+        if self.rect.bottom<0:
+            self.kill()
+
+#Meteor class for meteor movement in random sides
+class Meteor(Sprite):
+    def __init__(self,groups,surf,pos):
+        super().__init__(groups)
+        self.image=surf
+        self.rect=self.image.get_frect(topleft=pos)
+        self.direction=pygame.Vector2(uniform(-0.5,0.5),1)
+        self.speed=150
+    def update(self,dt):
+        #moving the meteor in y-axis
+        self.rect.center+=self.direction*self.speed*dt
+        if self.rect.top>WINDOW_HEIGHT:
+            self.kill()
+
+
+
 
 
 
@@ -98,7 +117,7 @@ for i in range(50):
     Stars(sprites,star_surf)
 
 player=Player(sprites)
-
+meteor_sprites=p
 
 meteor=pygame.image.load('../images/meteor.png').convert_alpha()
 meteor_rec=meteor.get_frect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT/2))
@@ -110,7 +129,7 @@ laser_vec=pygame.math.Vector2(0, -1)
 
 #custom event for meteor movement 
 meteor_event=pygame.event.custom_type()
-pygame.time.set_timer(meteor_event, 500)
+pygame.time.set_timer(meteor_event, 1000)
 
 
 #game loop
@@ -121,8 +140,8 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        #if event.type==meteor_event:
-            #print("Meteor is moving")
+        if event.type==meteor_event:
+            Meteor(sprites,meteor,(randint(0,WINDOW_WIDTH),randint(-150,-100)))
 
 
     sprites.update(dt)
@@ -131,7 +150,7 @@ while running:
    # print((player_vec*player_speed).magnitude())
     screen.fill((30,10,60))
 
-    screen.blit(meteor, meteor_rec)
+    #screen.blit(meteor, meteor_rec)
 
     sprites.draw(screen)
     
