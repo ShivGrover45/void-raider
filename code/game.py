@@ -44,7 +44,7 @@ class Player(Sprite):
         recent_click=pygame.mouse.get_just_pressed()
         if recent_click[0] and self.shoot:
            # print("Laser fired")
-            Laser(sprites, laser, self.rect.midtop)
+            Laser((sprites,laser_sprites), laser, self.rect.midtop)
             self.shoot=False
             self.laser_shoot_time=pygame.time.get_ticks()
         self.laser_time()
@@ -112,20 +112,21 @@ surface.fill((70,70,70))
 
 #creating player using sprite class
 sprites=Group()
+meteor_sprites=Group()
+laser_sprites=Group()
 star_surf=pygame.image.load('../images/star.png').convert_alpha()
 for i in range(50):
     Stars(sprites,star_surf)
 
 player=Player(sprites)
-meteor_sprites=p
+
 
 meteor=pygame.image.load('../images/meteor.png').convert_alpha()
 meteor_rec=meteor.get_frect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT/2))
 #importing laser and as of now just putting it in the middle of the screen, will change later
 laser=pygame.image.load('../images/laser.png').convert_alpha()
 
-#vector for laser movement (straight line movement)
-laser_vec=pygame.math.Vector2(0, -1)
+
 
 #custom event for meteor movement 
 meteor_event=pygame.event.custom_type()
@@ -141,10 +142,15 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type==meteor_event:
-            Meteor(sprites,meteor,(randint(0,WINDOW_WIDTH),randint(-150,-100)))
+            Meteor((sprites,meteor_sprites),meteor,(randint(0,WINDOW_WIDTH),randint(-150,-100)))
 
 
     sprites.update(dt)
+    #testing collision between laser and meteor
+    collisions=pygame.sprite.groupcollide(laser_sprites,meteor_sprites,True,True)
+    if collisions:
+        print("Collision detected")
+
 
 
    # print((player_vec*player_speed).magnitude())
