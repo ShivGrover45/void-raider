@@ -124,10 +124,6 @@ while running:
         #if event.type==meteor_event:
             #print("Meteor is moving")
 
-    
-
-    
- 
 
     sprites.update(dt)
 
