@@ -1,7 +1,10 @@
 #importing relevant packages/libraries
+
+
 import pygame
 from random import randint,uniform
 from pygame.sprite import Sprite,Group
+from os.path import join
 #Screen setup
 
 class Player(Sprite):
@@ -11,17 +14,14 @@ class Player(Sprite):
         self.rect=self.image.get_frect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT-50))
         self.direction=pygame.math.Vector2()
         self.speed=300
+        #trasnsform testing
+        self.image=pygame.transform.invert(self.image)
 
 
         #cooldown for shooting the laser, to avoid spamming the laser
         self.shoot=True
         self.laser_shoot_time=0
         self.cooldown_period=500 #in milliseconds
-        #adding mask for pixel perfect collision detection
-        mask=pygame.mask.from_surface(self.image)
-        mask_surf=mask.to_surface()
-        mask_surf.set_colorkey((0,0,0))
-        self.image=mask_surf
 
         
     
@@ -53,6 +53,7 @@ class Player(Sprite):
             Laser((sprites,laser_sprites), laser, self.rect.midtop)
             self.shoot=False
             self.laser_shoot_time=pygame.time.get_ticks()
+            laser_sound[0].play()
         self.laser_time()
 
 
@@ -69,6 +70,7 @@ class Laser(Sprite):
         super().__init__(groups)
         self.image=surf
         self.rect=self.image.get_frect(midbottom=pos)
+        
     def update(self,dt):
         #moving the laser in y-axis
         self.rect.centery-=300*dt
@@ -79,24 +81,53 @@ class Laser(Sprite):
 class Meteor(Sprite):
     def __init__(self,groups,surf,pos):
         super().__init__(groups)
+        self.original=surf
         self.image=surf
         self.rect=self.image.get_frect(topleft=pos)
         self.direction=pygame.Vector2(uniform(-0.5,0.5),1)
         self.speed=150
+        self.rotation_speed=randint(40,80)
+        self.rotate=0
     def update(self,dt):
         #moving the meteor in y-axis
         self.rect.center+=self.direction*self.speed*dt
+        #rotating the meteor with random speed
+        self.rotate+=self.rotation_speed*dt
+        self.image=pygame.transform.rotozoom(self.original,self.rotate,1)
+        self.rect=self.image.get_frect(center=self.rect.center)
         if self.rect.top>WINDOW_HEIGHT:
             self.kill()
 
-
+#Explosion animation class for meteor explosion when hit by laser
+class AnimatedExplosion(Sprite):
+    def __init__(self,groups,frames,pos):
+        super().__init__(groups)
+        self.frames=frames
+        self.frame_index=0
+        self.image=self.frames[self.frame_index]
+        self.rect=self.image.get_frect(center=pos)
+    def update(self,dt):
+        self.frame_index+=10*dt
+        if self.frame_index<len(self.frames):
+            self.image=self.frames[int(self.frame_index)]
+        else:
+            self.kill()
 def collisions():
     #testing collision between laser and meteor
-    collisions=pygame.sprite.groupcollide(laser_sprites,meteor_sprites,True,True)
-    player_coll=pygame.sprite.spritecollide(player,meteor_sprites,False)
+    collisions=pygame.sprite.groupcollide(laser_sprites,meteor_sprites,True,True,pygame.sprite.collide_mask)
+    player_coll=pygame.sprite.spritecollide(player,meteor_sprites,False,pygame.sprite.collide_mask)
+    for laser, meteors in collisions.items():
+      for meteor in meteors:
+        AnimatedExplosion(
+            sprites,
+            explosion_frames,
+            meteor.rect.center
+        )
+        explosion_sound[0].play()
     if player_coll:
         print("Player hit by meteor")
-        explosion()
+        damage_sound[0].play()
+        #explosion()
     return sum(len(meteors) for meteors in collisions.values())
 
 
@@ -147,6 +178,13 @@ player=Player(sprites)
 meteor=pygame.image.load('../images/meteor.png').convert_alpha()
 laser=pygame.image.load('../images/laser.png').convert_alpha()
 font=pygame.font.Font('../images/Oxanium-Bold.ttf',50)
+#importing explosion frames for meteor explosion animation
+explosion_frames=[ pygame.image.load(f'../images/explosion/{i}.png').convert_alpha() for i in range(21)]
+#importing sound effects
+laser_sound=[pygame.mixer.Sound(join('../audio','laser.wav'))]
+explosion_sound=[pygame.mixer.Sound(join('../audio','explosion.wav'))]
+damage_sound=[pygame.mixer.Sound(join('../audio','damage.ogg'))]
+game_music=[pygame.mixer.Sound(join('../audio','game_music.wav'))]
 
 
 
@@ -156,6 +194,9 @@ meteor_event=pygame.event.custom_type()
 pygame.time.set_timer(meteor_event, 1000)
 
 score = 0
+#game music
+game_music[0].set_volume(0.4)
+game_music[0].play()
 #game loop
 while running:
     dt=clock.tick()/1000
