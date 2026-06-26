@@ -17,6 +17,12 @@ class Player(Sprite):
         self.shoot=True
         self.laser_shoot_time=0
         self.cooldown_period=500 #in milliseconds
+        #adding mask for pixel perfect collision detection
+        mask=pygame.mask.from_surface(self.image)
+        mask_surf=mask.to_surface()
+        mask_surf.set_colorkey((0,0,0))
+        self.image=mask_surf
+
         
     
     def laser_time(self):
@@ -87,8 +93,24 @@ class Meteor(Sprite):
 def collisions():
     #testing collision between laser and meteor
     collisions=pygame.sprite.groupcollide(laser_sprites,meteor_sprites,True,True)
+    player_coll=pygame.sprite.spritecollide(player,meteor_sprites,False)
+    if player_coll:
+        print("Player hit by meteor")
+        explosion()
+    return sum(len(meteors) for meteors in collisions.values())
 
 
+
+def score_display(score):
+    text_surf=font.render(f'Score: {score}',True,(248,248,255))
+    return text_surf
+
+def border(screen,surface,position):
+    text_rect=surface.get_frect(center=position)
+    pygame.draw.rect(screen,(248,248,255),text_rect.inflate(30,10),2, border_radius=10)
+
+def explosion():
+    pass
 pygame.init()
 
 clock=pygame.time.Clock()
@@ -121,11 +143,11 @@ for i in range(50):
 
 player=Player(sprites)
 
-
+#importing useful assets for the game
 meteor=pygame.image.load('../images/meteor.png').convert_alpha()
-meteor_rec=meteor.get_frect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT/2))
-#importing laser and as of now just putting it in the middle of the screen, will change later
 laser=pygame.image.load('../images/laser.png').convert_alpha()
+font=pygame.font.Font('../images/Oxanium-Bold.ttf',50)
+
 
 
 
@@ -133,7 +155,7 @@ laser=pygame.image.load('../images/laser.png').convert_alpha()
 meteor_event=pygame.event.custom_type()
 pygame.time.set_timer(meteor_event, 1000)
 
-
+score = 0
 #game loop
 while running:
     dt=clock.tick()/1000
@@ -147,16 +169,21 @@ while running:
 
 
     sprites.update(dt)
-    collisions()
+    score+=collisions()
+   
 
 
 
    # print((player_vec*player_speed).magnitude())
     screen.fill((30,10,60))
 
-    #screen.blit(meteor, meteor_rec)
+    text_surf=score_display(score)
+    border(screen,text_surf,(WINDOW_WIDTH/2, 70))
 
+    #screen.blit(meteor, meteor_rec)
+    screen.blit(text_surf,(WINDOW_WIDTH/2-text_surf.get_width()/2,50))
     sprites.draw(screen)
+   
     
     pygame.display.update()
 pygame.quit()
